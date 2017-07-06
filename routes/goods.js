@@ -4,8 +4,6 @@ var router = express.Router()
 var mongoose = require('mongoose')
 var Computer = require('../models/computers')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
-// var url = require('url');
-
 router.get('/computer', function (req, res, next) {
     Computer.find({}, function (err, doc) {
         if (err) {

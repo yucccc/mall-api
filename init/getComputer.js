@@ -1,23 +1,24 @@
 // 爬取京东电脑商品
 var eventproxy = require('eventproxy');
 var cheerio = require('cheerio');
-var superagent = require('superagent');
+var request = require('superagent')
+var superagent = require('superagent-charset')(request)
 var mongoose = require('mongoose')
 var Computer = require('../models/computers')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
 
 var ep = new eventproxy();
 var productId = 20170705;// 商品id
-var pageUrls = [],
-    urlsArray = [],
-    pageNum = 10; // 抓取的页面数量
-for (let i = 1; i <= pageNum; i++) {
-    pageUrls.push('https://list.jd.com/list.html?cat=670,671,672&page=' + i + '&sort=sort_totalsales15_desc&trans=1&JL=6_0_0#J_main')
-}
+// var pageUrls = [],
+//     urlsArray = [],
+//     pageNum = 10; // 抓取的页面数量
+// for (let i = 1; i <= pageNum; i++) {
+//     pageUrls.push('https://list.jd.com/list.html?cat=670,671,672&page=' + i + '&sort=sort_totalsales15_desc&trans=1&JL=6_0_0#J_main')
+// }
 // var grabUrl = [];
 // var totalData = []; // 总数据
 function getComputer() {
-    superagent.get('https://list.jd.com/list.html?cat=670,671,672').end(function (err, res) {
+    superagent.get('https://list.jd.com/list.html?cat=670,671,672').charset('gbk').end(function (err, res) {
         if (err) {
             return console.error(err);
         }
@@ -38,12 +39,10 @@ function getComputer() {
                     var small = 'https:' + $(e).attr('src')
                     imgList.push(small)
                 })
-                // console.log(1)
                 return ({
                     productId: productId++,
-                    productName: '笔记本电脑' + productId++,
                     salePrice: salePrice,
-                    // test:$('#navitems-group1 .fore1').text().trim(),
+                    productTitle:$('.sku-name').text().trim(),
                     productImageSmall: imgList,
                     productImageBig: 'https:' + $('#spec-img').data('origin'),
                     // title: $('#spec-list img').eq(0).attr('alt'),
@@ -60,7 +59,7 @@ function getComputer() {
             // console.log(data)
         })
         topicUrls.forEach(function (url, i) {
-            superagent.get(url).end(function (err, res) {
+            superagent.get(url).charset('gbk').end(function (err, res) {
                 ep.emit('grabUrl', res.text);
             })
         })

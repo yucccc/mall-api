@@ -4,5 +4,5 @@ var getBanner = require('./getBanner')
 var getAdmin = require('./admin')
 
 getComputer()
-getBanner()
-getAdmin()
+// getBanner()
+// getAdmin()
