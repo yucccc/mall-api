@@ -1,17 +1,22 @@
-// 爬取京东手机列表
-var express = require('express');
+// 爬取京东电脑商品
 var eventproxy = require('eventproxy');
-var router = express.Router()
 var cheerio = require('cheerio');
 var superagent = require('superagent');
 var mongoose = require('mongoose')
 var Computer = require('../models/computers')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
-var url = require('url');
+
+var ep = new eventproxy();
+var productId = 20170705;// 商品id
+var pageUrls = [],
+    urlsArray = [],
+    pageNum = 10; // 抓取的页面数量
+for (let i = 1; i <= pageNum; i++) {
+    pageUrls.push('https://list.jd.com/list.html?cat=670,671,672&page=' + i + '&sort=sort_totalsales15_desc&trans=1&JL=6_0_0#J_main')
+}
 // var grabUrl = [];
-var totalData = []; // 总数据
-function start(req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'});
+// var totalData = []; // 总数据
+function getComputer() {
     superagent.get('https://list.jd.com/list.html?cat=670,671,672').end(function (err, res) {
         if (err) {
             return console.error(err);
@@ -23,8 +28,6 @@ function start(req, res) {
             var href = 'https:' + $element.find('.p-img >a').attr('href')
             topicUrls.push(href);// 获取所有url
         });
-        var ep = new eventproxy();
-        var productId = 20170705;
         // 监听一个自定义事件 data为返回的数据
         ep.after('grabUrl', topicUrls.length, function (data) {
             data = data.map(function (topicPair) {
@@ -53,6 +56,7 @@ function start(req, res) {
             // console.log(2)
             // totalData.push(data)
             Computer.insertMany(data)
+            // callback()
             // console.log(data)
         })
         topicUrls.forEach(function (url, i) {
@@ -61,7 +65,16 @@ function start(req, res) {
             })
         })
     })
-
+    // pageUrls.forEach(function (url) {//遍历所有的页面
+    //     superagent.get(url).end(function (err, res) {//取得所有页面的url
+    //         var $ = cheerio.load(res.text)
+    //         $('.gl-warp .gl-item').each(function (idx, element) {
+    //             var $element = $(element);
+    //             var href = 'https:' + $element.find('.p-img >a').attr('href')
+    //             topicUrls.push(href);// 获取所有url
+    //         });
+    //     })
+    // })
 }
-router.get('/', start)
-module.exports = router
+// getData()
+module.exports = getComputer
