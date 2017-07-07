@@ -59,6 +59,14 @@ var data = [{
             "postCode": "100001",
             "tel": "12345678901",
             "isDefault": true
+        },
+        {
+            "addressId": "100002",
+            "userName": "JackBean",
+            "streetName": "北京市朝阳区朝阳公园",
+            "postCode": "100001",
+            "tel": "88888888888",
+            "isDefault": true
         }
     ],
 }]
