@@ -42,9 +42,10 @@ function getComputer() {
                 return ({
                     productId: productId++,
                     salePrice: salePrice,
-                    productTitle:$('.sku-name').text().trim(),
+                    productTitle: $('.sku-name').text().trim(),
                     productImageSmall: imgList,
                     productImageBig: 'https:' + $('#spec-img').data('origin'),
+                    stock: 10,
                     // title: $('#spec-list img').eq(0).attr('alt'),
                     // news: $('#p-ad').text(),
                     // price: $('.itemInfo-wrap .J-summary-price .p-price >.price').text(),
