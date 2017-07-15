@@ -3,6 +3,6 @@ var getComputer = require('./getComputer')
 var getBanner = require('./getBanner')
 var getAdmin = require('./admin')
 
-getComputer()
-getBanner()
+// getComputer()
+// getBanner()
 getAdmin()

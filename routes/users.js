@@ -20,15 +20,10 @@ router.post('/login', function (req, res, next) {
                 path: '/',
                 maxAge: 1000 * 60 * 60
             });
-            res.cookie("userName", doc.userName, {
-                path: '/',
-                maxAge: 1000 * 60 * 60
-            });
             res.json({
                 status: '0',
                 msg: '登陆成功',
                 result: {
-                    userId: doc.userId,
                     name: doc.name,
                     avatar: doc.avatar
                 }
@@ -70,28 +65,28 @@ router.post('/cartList', function (req, res) {
     }
 })
 // 加入购物车
-router.post('/addCart', function (req, res) {
-    var userId = '';
-    if (userId) {
-    } else {
-        // 接收一个id
-        var goodsId = req.body.goodsId;
-        goodsId && Good.findOne({"productId": goodsId}, function (err, doc) {
-            if (err) {
-                res.json({
-                    status: '1',
-                    msg: err.message,
-                    result: ''
-                })
-            } else {
-                res.json({
-                    status: '0',
-                    msg: 'success',
-                    result: ''
-                })
-            }
-        })
-    }
-})
+// router.post('/addCart', function (req, res) {
+//     var userId = '';
+//     if (userId) {
+//     } else {
+//         // 接收一个id
+//         var goodsId = req.body.goodsId;
+//         goodsId && Good.findOne({"productId": goodsId}, function (err, doc) {
+//             if (err) {
+//                 res.json({
+//                     status: '1',
+//                     msg: err.message,
+//                     result: ''
+//                 })
+//             } else {
+//                 res.json({
+//                     status: '0',
+//                     msg: 'success',
+//                     result: ''
+//                 })
+//             }
+//         })
+//     }
+// })
 
 module.exports = router
