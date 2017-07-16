@@ -4,7 +4,7 @@ var cheerio = require('cheerio');
 var request = require('superagent')
 var superagent = require('superagent-charset')(request)
 var mongoose = require('mongoose')
-var Computer = require('../models/computers')
+var Good = require('../models/goods')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
 
 var ep = new eventproxy();
@@ -17,7 +17,7 @@ var productId = 20170705;// 商品id
 // }
 // var grabUrl = [];
 // var totalData = []; // 总数据
-function getComputer() {
+function getGoods() {
     superagent.get('https://list.jd.com/list.html?cat=670,671,672').charset('gbk').end(function (err, res) {
         if (err) {
             return console.error(err);
@@ -42,7 +42,7 @@ function getComputer() {
                 return ({
                     productId: productId++,
                     salePrice: salePrice,
-                    productTitle: $('.sku-name').text().trim(),
+                    productName: $('.sku-name').text().trim(),
                     productImageSmall: imgList,
                     productImageBig: 'https:' + $('#spec-img').data('origin'),
                     stock: 10,
@@ -55,7 +55,7 @@ function getComputer() {
             });
             // console.log(2)
             // totalData.push(data)
-            Computer.insertMany(data)
+            Good.insertMany(data)
             // callback()
             // console.log(data)
         })
@@ -77,4 +77,4 @@ function getComputer() {
     // })
 }
 // getData()
-module.exports = getComputer
+module.exports = getGoods

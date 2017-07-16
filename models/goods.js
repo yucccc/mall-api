@@ -1,12 +1,11 @@
-/**
- * Created by yucccc on 2017/6/29.
- */
-// var mongoose = require('mongoose')
-// // 表模型
-// var Schema = mongoose.Schema
-// var produtSchema = new Schema({
-//   'id': Number,
-//   'name': String,
-//   'description': String
-// })
-// module.exports = mongoose.model('Store', produtSchema)
+var mongoose = require('mongoose')
+// 表模型
+var produtSchema = new mongoose.Schema({
+    'productId': String,
+    'salePrice': Number,
+    'productTitle': String,
+    'productImageSmall': Array,
+    'productImageBig': String,
+    'stock': Number
+})
+module.exports = mongoose.model('Compuer', produtSchema)
