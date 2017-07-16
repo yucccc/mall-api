@@ -8,12 +8,12 @@ var userSchema = new mongoose.Schema({
     "orderList": Array,
     "cartList": [
         {
-            "id": String,
-            "name": String,
-            "price": String,
-            "img": String,
+            "productId": String,
+            "productImg": String,
+            "productName": String,
             "checked": String,
-            "num": Number
+            "productNum": Number,
+            "productPrice": Number
         }
     ],
     'addressList': Array

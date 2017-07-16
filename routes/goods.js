@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router()
 var mongoose = require('mongoose')
-var Computer = require('../models/computers')
+var Good = require('../models/goods')
 var User = require('../models/user')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
-// 电脑列表
+// 商品列表
 router.get('/computer', function (req, res, next) {
     let sort = req.param('sort') || '';
     let page = +req.param('page') || 1;
@@ -22,10 +22,10 @@ router.get('/computer', function (req, res, next) {
         }
     }
     // 返回一个模型
-    let computerModel = Computer.find(params).skip(skip).limit(pageSize);
+    let productModel = Good.find(params).skip(skip).limit(pageSize);
     // 进行排序 1 升序 -1 降序
-    sort && computerModel.sort({'salePrice': sort})
-    computerModel.exec(function (err, doc) {
+    sort && productModel.sort({'salePrice': sort})
+    productModel.exec(function (err, doc) {
         if (err) {
             res.json({
                 status: '1',
@@ -63,12 +63,13 @@ router.post('/addCart', function (req, res, next) {
                     var cartItem = '';
                     //  购物车有内容
                     if (userDoc.cartList.length) {
+                        console.log('肯定不会近这里')
                         // 遍历用户名下的购物车列表
                         userDoc.cartList.forEach(item => {
                             // 找到该商品
-                            if (item.id === productId) {
+                            if (item.productId === productId) {
                                 cartItem = item;
-                                item.num++;
+                                item.productNum++;
                             }
                         })
                         if (cartItem) {
@@ -93,7 +94,7 @@ router.post('/addCart', function (req, res, next) {
                         if (!cartItem) {
                             console.log('没找到')
                             // 没找到
-                            Computer.findOne({productId: productId}, function (err3, doc3) {
+                            Good.findOne({productId: productId}, function (err3, doc3) {
                                 if (err3) {
                                     res.json({
                                         status: '1',
@@ -102,12 +103,12 @@ router.post('/addCart', function (req, res, next) {
                                     })
                                 } else {
                                     let doc = {
-                                        "id": doc3.productId,
-                                        "img": doc3.productImageBig,
-                                        "name": doc3.productTitle,
-                                        "checked": 1,
-                                        "num": 1,
-                                        "price": doc3.salePrice
+                                        "productId": doc3.productId,
+                                        "productImg": doc3.productImageBig,
+                                        "productName": doc3.productName,
+                                        "checked": "1",
+                                        "productNum": 1,
+                                        "productPrice": doc3.salePrice
                                     };
                                     userDoc.cartList.push(doc)
                                     userDoc.save(function (err2, doc2) {
@@ -131,7 +132,43 @@ router.post('/addCart', function (req, res, next) {
                         }
 
                     } else {
-
+                        console.log('内容为空')
+                        // 没找到
+                        Good.findOne({productId: productId}, function (err3, doc3) {
+                            if (err3) {
+                                res.json({
+                                    status: '1',
+                                    msg: err3.message,
+                                    result: ''
+                                })
+                            } else {
+                                let doc = {
+                                    "productId": doc3.productId,
+                                    "productImg": doc3.productImageBig,
+                                    "productName": doc3.productName,
+                                    "checked": "1",
+                                    "productNum": 1,
+                                    "productPrice": doc3.salePrice
+                                };
+                                userDoc.cartList.push(doc)
+                                userDoc.save(function (err2, doc2) {
+                                    if (err2) {
+                                        res.json({
+                                            status: '1',
+                                            msg: err2.message,
+                                            result: ''
+                                        })
+                                    } else {
+                                        // 保存成功
+                                        res.json({
+                                            status: '0',
+                                            msg: '加入成功',
+                                            result: 'suc'
+                                        })
+                                    }
+                                })
+                            }
+                        })
                     }
                 } else {
                     console.log("没找到用户？？")
@@ -147,5 +184,46 @@ router.post('/addCart', function (req, res, next) {
         })
     }
 })
+// 删除购物车
+router.post('/delCart', function (req, res) {
+    let userId = req.cookies.userId;
+    let productId = req.body.productId;
+    if (userId) {
+        User.findOne({userId}, function (err, doc) {
+            if (doc) {
+                doc.cartList.forEach((item, i) => {
+                    if (item.productId === productId) {
+                        if (item.productNum > 1) {
+                            item.productNum--
+                        } else {
+                            doc.cartList.splice(i, 1)
+                        }
+                    }
+                })
+                doc.save(function (err, doc) {
+                    if (err) {
+                        res.json({
+                            status: '0',
+                            err: err.message,
+                            result: ''
+                        })
+                    } else {
+                        res.json({
+                            status: '1',
+                            msg: '删除成功',
+                            result: ''
+                        })
+                    }
+                })
 
+            }
+        })
+    } else {
+        res.json({
+            status: '0',
+            msg: '未登录',
+            result: ''
+        })
+    }
+})
 module.exports = router

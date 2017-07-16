@@ -1,7 +1,7 @@
 var express = require('express')
 var router = express.Router()
 var User = require('../models/user')
-var Good = require('../models/computers')
+var Good = require('../models/goods')
 // 登陆接口
 router.post('/login', function (req, res, next) {
     var params = {
@@ -37,56 +37,55 @@ router.post('/login', function (req, res, next) {
         }
     })
 })
+// 退出登陆
+router.post('/loginOut', function (req, res) {
+    res.cookie("userId", "", {
+        path: "/",
+        maxAge: -1
+    });
+    res.json({
+        status: "0",
+        msg: '',
+        result: ''
+    })
+})
+// 获取用户信息
+router.post('/userInfo', function (req, res) {
+    let userId = req.cookies.userId
+    if (userId) {
+        User.findOne({userId}, function (err, doc) {
+            res.json({
+                status: '1',
+                msg: 'suc',
+                result: {
+                    name: doc.name,
+                    avatar: doc.avatar
+                }
+            })
+        })
+    } else {
+        res.json({
+            status: '0',
+            msg: '未登录',
+            result: ''
+        })
+    }
+})
 // 获取购物车
 router.post('/cartList', function (req, res) {
-    // 如果有用户信息
-    var userId = '';
+    let userId = req.cookies.userId;
     if (userId) {
         // 去查用户名下的
-    } else {
-        // 根据id查
-        var goodsId = req.body.goodsList;
-        goodsId.length && Good.find({"productId": {$in: goodsId}}, {_id: 0, __v: 0}, function (err, doc) {
-            if (err) {
+        User.findOne({userId: userId}, function (err, userDoc) {
+            if (userDoc) {
                 res.json({
                     status: '1',
-                    msg: err.message,
-                    result: ''
-                })
-            } else {
-                res.json({
-                    status: '0',
-                    msg: 'success',
-                    count: doc.length,
-                    result: doc
+                    msg: "suc",
+                    count: userDoc.cartList.length,
+                    result: userDoc.cartList
                 })
             }
         })
     }
 })
-// 加入购物车
-// router.post('/addCart', function (req, res) {
-//     var userId = '';
-//     if (userId) {
-//     } else {
-//         // 接收一个id
-//         var goodsId = req.body.goodsId;
-//         goodsId && Good.findOne({"productId": goodsId}, function (err, doc) {
-//             if (err) {
-//                 res.json({
-//                     status: '1',
-//                     msg: err.message,
-//                     result: ''
-//                 })
-//             } else {
-//                 res.json({
-//                     status: '0',
-//                     msg: 'success',
-//                     result: ''
-//                 })
-//             }
-//         })
-//     }
-// })
-
 module.exports = router

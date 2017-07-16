@@ -1,8 +1,8 @@
 // 初始化数据库
-var getComputer = require('./getComputer')
+var getGoods = require('./getGoods')
 var getBanner = require('./getBanner')
-var getAdmin = require('./admin')
+let getAdmin = require('./admin');
 
-// getComputer()
-// getBanner()
-getAdmin()
+getGoods()
+getBanner()
+getAdmin();

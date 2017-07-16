@@ -3,9 +3,9 @@ var mongoose = require('mongoose')
 var produtSchema = new mongoose.Schema({
     'productId': String,
     'salePrice': Number,
-    'productTitle': String,
+    'productName': String,
     'productImageSmall': Array,
     'productImageBig': String,
     'stock': Number
 })
-module.exports = mongoose.model('Compuer', produtSchema)
+module.exports = mongoose.model('Good', produtSchema)
