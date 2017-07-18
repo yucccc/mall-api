@@ -63,7 +63,6 @@ router.post('/addCart', function (req, res, next) {
                     var cartItem = '';
                     //  购物车有内容
                     if (userDoc.cartList.length) {
-                        console.log('肯定不会近这里')
                         // 遍历用户名下的购物车列表
                         userDoc.cartList.forEach(item => {
                             // 找到该商品
@@ -183,6 +182,167 @@ router.post('/addCart', function (req, res, next) {
             result: ''
         })
     }
+})
+// 批量加入购物车  后期改
+router.post('/addCart1', function (req, res) {
+    let userId = req.cookies.userId,
+        productMsg = req.body.productMsg;
+    if (userId) {
+        User.findOne({userId}, (err, userDoc) => {
+            if (err) {
+                res.json({
+                    status: '0',
+                    msg: err.message,
+                    result: ''
+                })
+            } else {
+                if (userDoc) {
+                    // 未添加的商品
+                    let sx = [];
+                    let newSx = []; //
+                    //  购物车有内容
+                    if (userDoc.cartList.length) {
+                        // 遍历用户名下的购物车列表
+                        userDoc.cartList.forEach((item, i) => {
+                            // 找到该商品
+                            productMsg.forEach((pro, j) => {
+                                if (item.productId === pro.productId) {
+                                    sx.push(j)
+                                    item.productNum += pro.productNum
+                                }
+                            })
+                        })
+                        // 有不是重复的商品
+                        if (sx.length !== productMsg.length) {
+                            productMsg.forEach((item, i) => {
+                                if (sx[i] !== i) {//  找到未添加的
+                                    newSx.push(item)
+                                }
+                            })
+                            let goodList1 = [], goodNum1 = []
+                            newSx.forEach(item => {
+                                goodList1.push(item.productId)
+                                goodNum1.push(item.productNum)
+                            })
+                            Good.find({productId: {$in: goodList1}}, function (err3, goodDoc) {
+                                if (err3) {
+                                    res.json({
+                                        status: '1',
+                                        msg: err3.message,
+                                        result: ''
+                                    })
+                                } else {
+                                    var userCart = []
+                                    // 返回一个数组
+                                    goodDoc.forEach((item, i) => {
+                                        // userCart.push()
+                                        userDoc.cartList.push({
+                                            "productId": item.productId,
+                                            "productImg": item.productImageBig,
+                                            "productName": item.productName,
+                                            "checked": "1",
+                                            "productNum": goodNum1[i],
+                                            "productPrice": item.salePrice
+                                        })
+                                    })
+                                    // if (userCart.length) {
+                                    userDoc.save(function (err2, doc2) {
+                                        if (err2) {
+                                            res.json({
+                                                status: '1',
+                                                msg: err2.message,
+                                                result: ''
+                                            })
+                                        } else {
+                                            console.log(1111111)
+                                            // 保存成功
+                                            res.json({
+                                                status: '0',
+                                                msg: '加入成功',
+                                                result: 'suc'
+                                            })
+                                        }
+                                    })
+                                }
+
+                                // }
+                            })
+                        } else {
+                            userDoc.save(function (err2, doc2) {
+                                if (err2) {
+                                    res.json({
+                                        status: '1',
+                                        msg: err2.message,
+                                        result: ''
+                                    })
+                                } else {
+                                    // 保存成功
+                                    res.json({
+                                        status: '0',
+                                        msg: '加入成功',
+                                        result: 'suc'
+                                    })
+                                }
+                            })
+                        }
+
+                    } else {
+                        var goodList = [], goodNum = []
+                        productMsg.forEach(item => {
+                            goodList.push(item.productId)
+                            goodNum.push(item.productNum)
+                        })
+                        Good.find({productId: {$in: goodList}}, function (err3, doc) {
+                            if (err3) {
+                                res.json({
+                                    status: '1',
+                                    msg: err3.message,
+                                    result: ''
+                                })
+                            } else {
+                                console.log(doc)
+                                // 返回一个数组
+                                doc.forEach((item, i) => {
+                                    userDoc.cartList.push({
+                                        "productId": item.productId,
+                                        "productImg": item.productImageBig,
+                                        "productName": item.productName,
+                                        "checked": "1",
+                                        "productNum": goodNum[i],
+                                        "productPrice": item.salePrice
+                                    })
+                                })
+
+                                userDoc.save(function (err2, doc2) {
+                                    if (err2) {
+                                        res.json({
+                                            status: '1',
+                                            msg: err2.message,
+                                            result: ''
+                                        })
+                                    } else {
+                                        // 保存成功
+                                        res.json({
+                                            status: '0',
+                                            msg: '加入成功',
+                                            result: 'suc'
+                                        })
+                                    }
+                                })
+                            }
+                        })
+                    }
+                }
+            }
+        })
+    } else {
+        res.json({
+            status: '0',
+            msg: '未登录',
+            result: ''
+        })
+    }
+
 })
 // 删除购物车
 router.post('/delCart', function (req, res) {
