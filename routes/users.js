@@ -37,7 +37,7 @@ router.post('/login', function (req, res, next) {
         }
     })
 })
-// 退出登陆
+// 登出登陆
 router.post('/loginOut', function (req, res) {
     res.cookie("userId", "", {
         path: "/",
@@ -87,5 +87,68 @@ router.post('/cartList', function (req, res) {
             }
         })
     }
+})
+// 修改数量
+router.post('/cartEdit', function (req, res) {
+    let userId = req.cookies.userId,
+        productId = req.body.productId,
+        productNum = req.body.productNum > 10 ? 10 : req.body.productNum,
+        checked = req.body.checked;
+    if (userId) {
+        User.update({"userId": userId, "cartList.productId": productId}, {
+            "cartList.$.productNum": productNum,
+            "cartList.$.checked": checked,
+        }, (err, doc) => {
+            if (err) {
+                res.json({
+                    status: '1',
+                    msg: err.message,
+                    result: ''
+                });
+            } else {
+                res.json({
+                    status: '0',
+                    msg: '',
+                    result: 'suc'
+                });
+            }
+        })
+    }
+
+})
+// 全选
+router.post('/editCheckAll', function (req, res) {
+    let userId = req.cookies.userId,
+        checkAll = req.body.checkAll ? '1' : '0';
+    User.findOne({userId}, function (err, doc) {
+        if (err) {
+            res.json({
+                status: '0',
+                msg: err.message,
+                result: ''
+            })
+        } else {
+            if (doc) {
+                doc.cartList.forEach(item => {
+                    item.checked = checkAll
+                })
+                doc.save(function (err1, doc) {
+                    if (err1) {
+                        res.json({
+                            status: '1',
+                            msg: err1, message,
+                            result: ''
+                        });
+                    } else {
+                        res.json({
+                            status: '0',
+                            msg: '',
+                            result: 'suc'
+                        });
+                    }
+                })
+            }
+        }
+    })
 })
 module.exports = router
