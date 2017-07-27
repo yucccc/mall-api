@@ -55,7 +55,7 @@ router.post('/userInfo', function (req, res) {
     if (userId) {
         User.findOne({userId}, function (err, doc) {
             res.json({
-                status: '1',
+                status: '0',
                 msg: 'suc',
                 result: {
                     name: doc.name,
@@ -65,7 +65,7 @@ router.post('/userInfo', function (req, res) {
         })
     } else {
         res.json({
-            status: '0',
+            status: '1',
             msg: '未登录',
             result: ''
         })
@@ -85,6 +85,12 @@ router.post('/cartList', function (req, res) {
                     result: userDoc.cartList
                 })
             }
+        })
+    } else {
+        res.json({
+            status: '0',
+            msg: '未登录',
+            result: ''
         })
     }
 })
@@ -148,6 +154,32 @@ router.post('/editCheckAll', function (req, res) {
                     }
                 })
             }
+        }
+    })
+})
+// 删除购物车
+router.post('/cartDel', function (req, res) {
+    let userId = req.cookies.userId,
+        productId = req.body.productId;
+    User.update({userId}, {
+        $pull: {
+            'cartList': {
+                'productId': productId
+            }
+        }
+    }, function (err, doc) {
+        if (err) {
+            res.json({
+                status: '1',
+                msg: err.message,
+                result: ''
+            });
+        } else {
+            res.json({
+                status: '0',
+                msg: '',
+                result: 'suc'
+            });
         }
     })
 })
