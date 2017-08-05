@@ -2,6 +2,7 @@ var express = require('express')
 var router = express.Router()
 var User = require('../models/user')
 var Good = require('../models/goods')
+require('./../util/dateFormat')
 // 登陆接口
 router.post('/login', function (req, res) {
     var params = {
@@ -53,7 +54,9 @@ router.post('/loginOut', function (req, res) {
 router.post('/userInfo', function (req, res) {
     let userId = req.cookies.userId
     if (userId) {
-        User.findOne({userId}, function (err, doc) {
+        User.findOne({
+            userId
+        }, function (err, doc) {
             res.json({
                 status: '0',
                 msg: 'suc',
@@ -76,7 +79,9 @@ router.post('/cartList', function (req, res) {
     let userId = req.cookies.userId;
     if (userId) {
         // 去查用户名下的
-        User.findOne({userId: userId}, function (err, userDoc) {
+        User.findOne({
+            userId: userId
+        }, function (err, userDoc) {
             if (userDoc) {
                 res.json({
                     status: '1',
@@ -101,7 +106,10 @@ router.post('/cartEdit', function (req, res) {
         productNum = req.body.productNum > 10 ? 10 : req.body.productNum,
         checked = req.body.checked;
     if (userId) {
-        User.update({"userId": userId, "cartList.productId": productId}, {
+        User.update({
+            "userId": userId,
+            "cartList.productId": productId
+        }, {
             "cartList.$.productNum": productNum,
             "cartList.$.checked": checked,
         }, (err, doc) => {
@@ -126,7 +134,9 @@ router.post('/cartEdit', function (req, res) {
 router.post('/editCheckAll', function (req, res) {
     let userId = req.cookies.userId,
         checkAll = req.body.checkAll ? '1' : '0';
-    User.findOne({userId}, function (err, doc) {
+    User.findOne({
+        userId
+    }, function (err, doc) {
         if (err) {
             res.json({
                 status: '0',
@@ -142,7 +152,8 @@ router.post('/editCheckAll', function (req, res) {
                     if (err1) {
                         res.json({
                             status: '1',
-                            msg: err1, message,
+                            msg: err1,
+                            message,
                             result: ''
                         });
                     } else {
@@ -161,7 +172,9 @@ router.post('/editCheckAll', function (req, res) {
 router.post('/cartDel', function (req, res) {
     let userId = req.cookies.userId,
         productId = req.body.productId;
-    User.update({userId}, {
+    User.update({
+        userId
+    }, {
         $pull: {
             'cartList': {
                 'productId': productId
@@ -188,15 +201,15 @@ router.post('/addressList', function (req, res) {
     let userId = req.cookies.userId,
         addressId = req.body.addressId || ''; // 地址id
     if (userId) {
-        User.findOne({userId}, function (err, doc) {
+        User.findOne({
+            userId
+        }, function (err, doc) {
             if (err) {
-                res.json(
-                    {
-                        status: '1',
-                        msg: err.message,
-                        result: ''
-                    }
-                )
+                res.json({
+                    status: '1',
+                    msg: err.message,
+                    result: ''
+                })
             } else {
                 let addressList = doc.addressList;
                 if (addressId) {
@@ -206,13 +219,11 @@ router.post('/addressList', function (req, res) {
                         }
                     })
                 }
-                res.json(
-                    {
-                        status: '0',
-                        msg: 'suc',
-                        result: addressList
-                    }
-                )
+                res.json({
+                    status: '0',
+                    msg: 'suc',
+                    result: addressList
+                })
             }
         })
     }
@@ -226,7 +237,9 @@ router.post('/addressUpdate', function (req, res) {
         streetName = req.body.streetName,
         isDefault = req.body.isDefault || false;
     if (userId && addressId && userName && tel && streetName) {
-        User.findOne({userId}, (err, userDoc) => {
+        User.findOne({
+            userId
+        }, (err, userDoc) => {
             if (err) {
                 res.json({
                     status: '1',
@@ -263,7 +276,9 @@ router.post('/addressUpdate', function (req, res) {
                         }
                     })
                 } else {
-                    User.update({"addressList.addressId": addressId}, {
+                    User.update({
+                        "addressList.addressId": addressId
+                    }, {
                         "addressList.$.userName": userName,
                         "addressList.$.tel": tel,
                         "addressList.$.streetName": streetName
@@ -302,7 +317,9 @@ router.post('/addressAdd', function (req, res) {
         streetName = req.body.streetName,
         isDefault = req.body.isDefault || false;
     if (userId && userName && tel && streetName) {
-        User.findOne({userId}, (err, doc) => {
+        User.findOne({
+            userId
+        }, (err, doc) => {
             if (err) {
                 res.json({
                     status: '1',
@@ -317,7 +334,7 @@ router.post('/addressAdd', function (req, res) {
                     })
                 }
                 addressList.push({
-                    "addressId": Date.parse(new Date()),
+                    "addressId": parseInt(Date.parse(new Date())),
                     userName,
                     tel,
                     streetName,
@@ -353,7 +370,9 @@ router.post('/addressDel', function (req, res) {
     let userId = req.cookies.userId,
         addressId = req.body.addressId;
     if (userId && addressId) {
-        User.update({userId}, {
+        User.update({
+            userId
+        }, {
             $pull: {
                 'addressList': {
                     'addressId': addressId
@@ -383,6 +402,121 @@ router.post('/addressDel', function (req, res) {
     }
 
 })
-// 支付接口
+// 生成订单
+router.post('/payMent', function (req, res) {
+    let userId = req.cookies.userId,
+        addressId = req.body.addressId,
+        orderTotal = req.body.orderTotal; // 商品总价格 
+    if (userId) {
+        if (addressId && orderTotal) {
+            User.findOne({
+                userId
+            }, (err, userDoc) => {
+                if (err) {
+                    res.json({
+                        status: '1',
+                        msg: err.message,
+                        result: ''
+                    })
+                } else {
+                    let addressList = userDoc.addressList,
+                        cartList = userDoc.cartList;
+                    let userAddress = {},
+                        goodsList = [];
+                    // 地址信息
+                    addressList.forEach(item => {
+                        console.log(typeof item.addressId);
+                        if (item.addressId == addressId) {
+                            userAddress = item
+                        }
+                    })
+                    //获取用户购物车的购买商品
+                    cartList.forEach((item) => {
+                        if (item.checked == '1') {
+                            goodsList.push(item);
+                        }
+                    });
 
+                    // 生成订单号
+                    let platform = '618';
+                    let r1 = Math.floor(Math.random() * 10);
+                    let r2 = Math.floor(Math.random() * 10);
+                    let sysDate = new Date().Format('yyyyMMddhhmmss');
+                    let createDate = new Date().Format('yyyy-MM-dd hh:mm:ss');
+                    let orderId = platform + r1 + sysDate + r2;
+                    let order = {
+                        orderId: orderId,
+                        orderTotal: orderTotal,
+                        addressInfo: userAddress,
+                        goodsList: goodsList,
+                        orderStatus: '1',
+                        createDate: createDate
+                    };
+                    userDoc.cartList = [];
+                    userDoc.orderList.push(order);
+                    userDoc.save(function (err1, doc1) {
+                        if (err1) {
+                            res.json({
+                                status: "1",
+                                msg: err.message,
+                                result: ''
+                            });
+                        } else { // 保存
+                            res.json({
+                                status: "0",
+                                msg: '',
+                                result: {
+                                    orderId: order.orderId,
+                                    orderTotal: order.orderTotal
+                                }
+                            });
+                        }
+                    });
+                }
+            })
+        } else {
+            res.json({
+                status: '1',
+                msg: '缺少必须参数',
+                result: ''
+            })
+        }
+    } else {
+        res.json({
+            status: '1',
+            msg: '未登录',
+            result: ''
+        })
+    }
+
+})
+// 查询订单
+router.post('/orderList', function (req, res) {
+    let userId = req.cookies.userId,
+        orderId = req.body.orderId;
+    if (userId) {
+        User.findOne({
+            userId
+        }, (err, doc) => {
+            if (err) {
+                res.json({
+                    status: '1',
+                    msg: err.message,
+                    result: ''
+                })
+            } else {
+                let orderList = doc.orderList,
+                    msg = 'suc';
+                if (!orderList.length) {
+                    msg = '该用户暂无订单'
+                }
+                res.json({
+                    status: '0',
+                    msg: msg,
+                    result: orderList
+                })
+            }
+        })
+    }
+})
 module.exports = router

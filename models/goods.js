@@ -6,6 +6,9 @@ var produtSchema = new mongoose.Schema({
     'productName': String,
     'productImageSmall': Array,
     'productImageBig': String,
-    'stock': Number
+    'stock': Number,
+    'sub_title': String,
+    'limit_num': String,
+    'productMsg': Object
 })
 module.exports = mongoose.model('Good', produtSchema)

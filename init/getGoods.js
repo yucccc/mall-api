@@ -6,75 +6,56 @@ var superagent = require('superagent-charset')(request)
 var mongoose = require('mongoose')
 var Good = require('../models/goods')
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
-
-var ep = new eventproxy();
-var productId = 20170705;// 商品id
-// var pageUrls = [],
-//     urlsArray = [],
-//     pageNum = 10; // 抓取的页面数量
-// for (let i = 1; i <= pageNum; i++) {
-//     pageUrls.push('https://list.jd.com/list.html?cat=670,671,672&page=' + i + '&sort=sort_totalsales15_desc&trans=1&JL=6_0_0#J_main')
-// }
-// var grabUrl = [];
-// var totalData = []; // 总数据
+let ep = new eventproxy();
+let baseUrl = 'http://www.smartisan.com';
 function getGoods() {
-    superagent.get('https://list.jd.com/list.html?cat=670,671,672').charset('gbk').end(function (err, res) {
-        if (err) {
-            return console.error(err);
-        }
-        var topicUrls = [];
-        var $ = cheerio.load(res.text);
-        $('.gl-warp .gl-item').each(function (idx, element) {
-            var $element = $(element);
-            var href = 'https:' + $element.find('.p-img >a').attr('href')
-            topicUrls.push(href);// 获取所有url
+    let ListLength = true, requestUrlLength = 5;
+    let requestUrl = [];// 请求的url
+    for (let i = 1; i < requestUrlLength; i++) {
+        requestUrl.push(`${baseUrl}/product/spus?page_size=20&category_id=62&page=${i}&sort=sort`)
+    }
+    ep.after('grabUrl', requestUrl.length, (data) => {//data是所有数据
+        let productUrl = [];
+        data.forEach(function (item) {
+            let item1 = JSON.parse(item)
+            let list = item1.data.list
+            list.forEach(list1 => { //每一项
+                let id = list1.id
+                productUrl.push(`${baseUrl}/product/skus/${id}01?with_spu_sku=true&with_stock=true`)
+            })
         });
-        // 监听一个自定义事件 data为返回的数据
-        ep.after('grabUrl', topicUrls.length, function (data) {
-            data = data.map(function (topicPair) {
-                var imgList = []
-                var $ = cheerio.load(topicPair);
-                var salePrice = Math.ceil(Math.random() * 10000)
-                $('#spec-list img').each(function (i, e) {
-                    var small = 'https:' + $(e).attr('src')
-                    imgList.push(small)
-                })
-                return ({
-                    productId: productId++,
-                    salePrice: salePrice,
-                    productName: $('.sku-name').text().trim(),
-                    productImageSmall: imgList,
-                    productImageBig: 'https:' + $('#spec-img').data('origin'),
-                    stock: 10,
-                    // title: $('#spec-list img').eq(0).attr('alt'),
-                    // news: $('#p-ad').text(),
-                    // price: $('.itemInfo-wrap .J-summary-price .p-price >.price').text(),
-                    // dd: $('.dd').eq(0).text().trim(),
-                    // commentCount: $('#comment-count').find('.count').text()
-                });
-            });
-            // console.log(2)
-            // totalData.push(data)
+        ep.after('productData', productUrl.length, (data) => {
+            data = data.map((item, i) => {
+                let item1 = JSON.parse(item); //商品信息
+                let data1 = item1.data;
+                let pro = {
+                    productId: data1.id,
+                    salePrice: data1.price,
+                    productName: data1.shop_info.title,
+                    sub_title: data1.shop_info.shop_info,// 描述
+                    limit_num: data1.shop_info.limit_num,// 限购
+                    productImageSmall: data1.shop_info.ali_images,// 小图
+                    productImageBig: data1.shop_info.ali_image,// 主题
+                    productMsg: data1.shop_info.tpl_content.base.images.ali,
+                    stock: 10
+                }
+                return pro
+            })
             Good.insertMany(data)
-            // callback()
-            // console.log(data)
         })
-        topicUrls.forEach(function (url, i) {
-            superagent.get(url).charset('gbk').end(function (err, res) {
-                ep.emit('grabUrl', res.text);
+        // 根据url去请求
+        productUrl.forEach(url => {
+            superagent.get(url).end((err2, res2) => {
+                ep.emit('productData', res2.text); // 每次请求的数据 获取id
             })
         })
     })
-    // pageUrls.forEach(function (url) {//遍历所有的页面
-    //     superagent.get(url).end(function (err, res) {//取得所有页面的url
-    //         var $ = cheerio.load(res.text)
-    //         $('.gl-warp .gl-item').each(function (idx, element) {
-    //             var $element = $(element);
-    //             var href = 'https:' + $element.find('.p-img >a').attr('href')
-    //             topicUrls.push(href);// 获取所有url
-    //         });
-    //     })
-    // })
+
+    requestUrl.forEach((item, i) => {
+        superagent.get(item).end((err1, res1) => {
+            ep.emit('grabUrl', res1.text); // 每次请求的数据 获取id
+        })
+    })
+
 }
-// getData()
 module.exports = getGoods

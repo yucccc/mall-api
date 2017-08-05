@@ -3,7 +3,14 @@ var router = express.Router()
 var mongoose = require('mongoose')
 var Good = require('../models/goods')
 var User = require('../models/user')
+var superagent = require('superagent')
+// var superagent = require('superagent-charset')(request)
+var eventproxy = require('eventproxy');
+var cheerio = require('cheerio');
+var ep = new eventproxy();
+
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
+
 // 商品列表
 router.get('/computer', function (req, res, next) {
     let sort = req.param('sort') || '';
@@ -44,6 +51,7 @@ router.get('/computer', function (req, res, next) {
         }
     })
 })
+
 // 加入购物车
 router.post('/addCart', function (req, res, next) {
     let userId = req.cookies.userId;
@@ -183,6 +191,7 @@ router.post('/addCart', function (req, res, next) {
         })
     }
 })
+
 // 批量加入购物车  后期改
 router.post('/addCart1', function (req, res) {
     let userId = req.cookies.userId,
@@ -344,6 +353,7 @@ router.post('/addCart1', function (req, res) {
     }
 
 })
+
 // 删除购物车
 router.post('/delCart', function (req, res) {
     let userId = req.cookies.userId;
@@ -385,5 +395,30 @@ router.post('/delCart', function (req, res) {
             result: ''
         })
     }
+})
+
+// 转发锤子接口
+router.get('/productHome', function (req, res) {
+    superagent.get('http://www.smartisan.com/product/home').end(function (err, res1) {
+        if (err) {
+            res.json({
+                status: '1',
+                msg: err.message,
+                result: ''
+            })
+        } else {
+            let result = JSON.parse(res1.text)
+            res.json({
+                status: '0',
+                msg: 'suc',
+                result: result
+            })
+        }
+    })
+})
+
+// 抓取锤子手机商品信息
+router.get('/product', function (req, res) {
+
 })
 module.exports = router
