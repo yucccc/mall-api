@@ -406,7 +406,9 @@ router.post('/addressDel', function (req, res) {
 router.post('/payMent', function (req, res) {
     let userId = req.cookies.userId,
         addressId = req.body.addressId,
-        orderTotal = req.body.orderTotal; // 商品总价格 
+        orderTotal = req.body.orderTotal,// 商品总价格
+        productId = req.body.productId || '',
+        productNum = req.body.productNum || 0;
     if (userId) {
         if (addressId && orderTotal) {
             User.findOne({
@@ -419,24 +421,45 @@ router.post('/payMent', function (req, res) {
                         result: ''
                     })
                 } else {
-                    let addressList = userDoc.addressList,
-                        cartList = userDoc.cartList;
                     let userAddress = {},
                         goodsList = [];
+                    let addressList = userDoc.addressList,
+                        cartList = userDoc.cartList;
+                    if (productId && productNum) {
+                        Good.findOne({productId}, (goodsErr, goodsDoc) => {
+                            if (goodsErr) {
+                                res.json({
+                                    status: '1',
+                                    msg: goodsErr.message,
+                                    result: ''
+                                })
+                            } else {
+                                let item = {
+                                    productId: goodsDoc.productId,
+                                    productImg: goodsDoc.productImageBig,
+                                    productName: goodsDoc.productName,
+                                    checked: '1',
+                                    productNum,
+                                    productPrice: goodsDoc.salePrice
+                                }
+                                goodsList.push(item)
+
+                            }
+                        })
+                    } else {
+                        // 获取用户购物车的购买商品
+                        cartList.forEach((item) => {
+                            if (item.checked == '1') {
+                                goodsList.push(item);
+                            }
+                        });
+                    }
                     // 地址信息
                     addressList.forEach(item => {
-                        console.log(typeof item.addressId);
                         if (item.addressId == addressId) {
                             userAddress = item
                         }
                     })
-                    //获取用户购物车的购买商品
-                    cartList.forEach((item) => {
-                        if (item.checked == '1') {
-                            goodsList.push(item);
-                        }
-                    });
-
                     // 生成订单号
                     let platform = '618';
                     let r1 = Math.floor(Math.random() * 10);
@@ -452,26 +475,28 @@ router.post('/payMent', function (req, res) {
                         orderStatus: '1',
                         createDate: createDate
                     };
-                    userDoc.cartList = [];
-                    userDoc.orderList.push(order);
-                    userDoc.save(function (err1, doc1) {
-                        if (err1) {
-                            res.json({
-                                status: "1",
-                                msg: err.message,
-                                result: ''
-                            });
-                        } else { // 保存
-                            res.json({
-                                status: "0",
-                                msg: '',
-                                result: {
-                                    orderId: order.orderId,
-                                    orderTotal: order.orderTotal
-                                }
-                            });
-                        }
-                    });
+                    setTimeout(() => {
+                        userDoc.cartList = [];
+                        userDoc.orderList.push(order);
+                        userDoc.save(function (err1, doc1) {
+                            if (err1) {
+                                res.json({
+                                    status: "1",
+                                    msg: err.message,
+                                    result: ''
+                                });
+                            } else { // 保存
+                                res.json({
+                                    status: "0",
+                                    msg: '',
+                                    result: {
+                                        orderId: order.orderId,
+                                        orderTotal: order.orderTotal
+                                    }
+                                });
+                            }
+                        });
+                    }, 1)
                 }
             })
         } else {

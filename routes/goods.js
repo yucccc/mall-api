@@ -4,10 +4,6 @@ var mongoose = require('mongoose')
 var Good = require('../models/goods')
 var User = require('../models/user')
 var superagent = require('superagent')
-// var superagent = require('superagent-charset')(request)
-var eventproxy = require('eventproxy');
-var cheerio = require('cheerio');
-var ep = new eventproxy();
 
 mongoose.connect('mongodb://127.0.0.1:27017/mymall')
 
@@ -56,7 +52,7 @@ router.get('/computer', function (req, res, next) {
 router.post('/addCart', function (req, res, next) {
     let userId = req.cookies.userId;
     let productId = req.body.productId;
-    // shopId = req.body.shopId;
+    let productNum = req.body.productNum || 1;
     if (userId) {
         User.find({userId: userId}, function (err, userDoc) {
             if (err) {
@@ -76,7 +72,7 @@ router.post('/addCart', function (req, res, next) {
                             // 找到该商品
                             if (item.productId === productId) {
                                 cartItem = item;
-                                item.productNum++;
+                                item.productNum += productNum;
                             }
                         })
                         if (cartItem) {
@@ -99,7 +95,6 @@ router.post('/addCart', function (req, res, next) {
                         }
                         // 保存数据
                         if (!cartItem) {
-                            console.log('没找到')
                             // 没找到
                             Good.findOne({productId: productId}, function (err3, doc3) {
                                 if (err3) {
@@ -114,7 +109,7 @@ router.post('/addCart', function (req, res, next) {
                                         "productImg": doc3.productImageBig,
                                         "productName": doc3.productName,
                                         "checked": "1",
-                                        "productNum": 1,
+                                        "productNum": productNum,
                                         "productPrice": doc3.salePrice
                                     };
                                     userDoc.cartList.push(doc)
@@ -354,49 +349,6 @@ router.post('/addCart1', function (req, res) {
 
 })
 
-// 删除购物车
-router.post('/delCart', function (req, res) {
-    let userId = req.cookies.userId;
-    let productId = req.body.productId;
-    if (userId) {
-        User.findOne({userId}, function (err, doc) {
-            if (doc) {
-                doc.cartList.forEach((item, i) => {
-                    if (item.productId === productId) {
-                        if (item.productNum > 1) {
-                            item.productNum--
-                        } else {
-                            doc.cartList.splice(i, 1)
-                        }
-                    }
-                })
-                doc.save(function (err, doc) {
-                    if (err) {
-                        res.json({
-                            status: '0',
-                            err: err.message,
-                            result: ''
-                        })
-                    } else {
-                        res.json({
-                            status: '1',
-                            msg: '删除成功',
-                            result: ''
-                        })
-                    }
-                })
-
-            }
-        })
-    } else {
-        res.json({
-            status: '0',
-            msg: '未登录',
-            result: ''
-        })
-    }
-})
-
 // 转发锤子接口
 router.get('/productHome', function (req, res) {
     superagent.get('http://www.smartisan.com/product/home').end(function (err, res1) {
@@ -417,8 +369,24 @@ router.get('/productHome', function (req, res) {
     })
 })
 
-// 抓取锤子手机商品信息
-router.get('/product', function (req, res) {
-
+// 商品信息
+router.get('/productDet', function (req, res) {
+    let productId = req.param('productId')
+    Good.findOne({productId}, (err, doc) => {
+        if (err) {
+            res.json({
+                status: '1',
+                msg: err.message,
+                result: ''
+            })
+        } else {
+            res.json({
+                status: '1',
+                msg: 'suc',
+                result: doc
+            })
+        }
+    })
 })
+
 module.exports = router
