@@ -7,10 +7,9 @@ var bodyParser = require('body-parser');
 
 var index = require('./routes/index');
 var users = require('./routes/users');
-// 轮播图
-var banner = require('./routes/banner');
 // 商品
 var goods =  require('./routes/goods')
+
 var app = express();
 
 // view engine setup
@@ -27,7 +26,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
 app.use('/users', users);
-app.use('/banner', banner);
 app.use('/goods', goods);
 
 // catch 404 and forward to error handler

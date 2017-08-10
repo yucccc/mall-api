@@ -187,7 +187,7 @@ router.post('/addCart', function (req, res, next) {
     }
 })
 
-// 批量加入购物车  后期改
+// 批量加入购物车
 router.post('/addCart1', function (req, res) {
     let userId = req.cookies.userId,
         productMsg = req.body.productMsg;
@@ -258,7 +258,6 @@ router.post('/addCart1', function (req, res) {
                                                 result: ''
                                             })
                                         } else {
-                                            console.log(1111111)
                                             // 保存成功
                                             res.json({
                                                 status: '0',
@@ -360,11 +359,69 @@ router.get('/productHome', function (req, res) {
             })
         } else {
             let result = JSON.parse(res1.text)
-            res.json({
-                status: '0',
-                msg: 'suc',
-                result: result
+            let home_hot = result.data.home_hot || ['100031816','100032201','100025104','100023501'];
+            let home_floors = result.data.home_floors
+            let pId = [], // 保存总商品id
+                hotId=[], // 热门id
+                floorsId = [],// 官方精选 品牌精选
+                floorsList = []; 
+            home_hot.forEach(item=>{
+                hotId.push(item.spu_id+'01')
+                pId.push(item.spu_id+'01')
             })
+            home_floors.forEach((item,i)=>{
+                let tab_items = item.tabs[0].tab_items // 
+                floorsId[i] = []
+                floorsList[i] = {};
+                floorsList[i].tabs = [];
+                floorsList[i].image =  home_floors[i].tabs[0].tab_items[0]
+                floorsList[i].title = home_floors[i].title
+                tab_items.forEach(tab=>{
+                    let id = tab.spu_id 
+                    if(id){
+                     floorsId[i].push(id+'01') // 存储id
+                     pId.push(id+'01')
+                    }
+                })
+            })
+            Good.find({productId: {$in: pId}},(goodsErr,goodsDoc)=>{
+                if(goodsErr){
+                    res.json({
+                    status: '1',
+                    msg: goodsErr.message,
+                    result: ''
+                })
+                }else{
+                 let hotList = [];
+                 goodsDoc.forEach(item=>{
+                     let itemId =  item.productId;
+                     hotId.forEach(id=>{
+                         if(itemId===id){
+                            hotList.push(item)
+                         }
+                     })
+                    floorsId.forEach((fitem,i)=>{
+                        fitem.forEach(fid=>{
+                        if(itemId===fid){
+                          floorsList[i].tabs.push(item)
+                         }
+                        })
+                    })
+                 })
+
+                
+                res.json({
+                    status: '0',
+                    msg: 'suc',
+                    result: {
+                        "home_hot":hotList,
+                        'home_floors':floorsList
+                    }
+                })
+            }
+            })
+
+
         }
     })
 })
