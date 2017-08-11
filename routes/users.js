@@ -1,8 +1,17 @@
 var express = require('express')
 var router = express.Router()
+require('./../util/dateFormat')
 var User = require('../models/user')
 var Good = require('../models/goods')
-require('./../util/dateFormat')
+var fs = require('fs');
+var qn = require('qn');
+var bucket = 'avatar-img-d';
+var client = qn.create({
+    accessKey: 'n83SaVzVtzNbZvGCz0gWsWPgpERKp0oK4BtvXS-Y',
+    secretKey: '1Uve9T2_gQX9pDY0BFJCa1RM_isy9rNjfC4XVliW',
+    bucket: bucket,
+    origin: 'http://ouibvkb9c.bkt.clouddn.com'
+})
 // 登陆接口
 router.post('/login', function (req, res) {
     var params = {
@@ -50,6 +59,115 @@ router.post('/loginOut', function (req, res) {
         result: ''
     })
 })
+// 注册账号
+router.post('/register', function (req, res) {
+    let userName = req.body.userName, //账号　
+        userPwd = req.body.userPwd;　// 密码
+    User.findOne({userName}, (err, doc) => {
+        if (err) {
+            res.json({
+                status: '1',
+                msg: err.message,
+                result: ''
+            })
+        } else {
+            if (doc) {
+                res.json({
+                    status: '1',
+                    msg: '账号已存在!',
+                    result: ''
+                })
+            } else {
+                let r1 = Math.floor(Math.random() * 10);
+                let r2 = Math.floor(Math.random() * 10);
+                let userId = `${r1}${(Date.parse(new Date())) / 1000}${r2}`
+                // 可以注册
+                User.insertMany({
+                    userName: userName,
+                    name: '皮皮虾',
+                    avatar: 'http://osc9sqdxe.bkt.clouddn.com/default-user-avatar.png',
+                    userId: userId,
+                    userPwd: userPwd,
+                    orderList: [],
+                    cartList: [],
+                    addressList: []
+                })
+                res.json({
+                    status: '0',
+                    msg: '注册成功',
+                    result: ''
+                })
+            }
+        }
+    })
+})
+// 上传图片
+router.post('/upload', function (req, res, next) {
+    // 图片数据流
+    var imgData = req.body.imgData;
+    // 构建图片名
+    var fileName = Date.now() + '.png';
+    // 构建图片路径
+    var filePath = './image/' + fileName;
+    //过滤data:URL
+    var base64Data = imgData.replace(/^data:image\/\w+;base64,/, "");
+    var dataBuffer = new Buffer(base64Data, 'base64');
+    fs.writeFile(filePath, dataBuffer, function (err) {
+        if (err) {
+            res.end(JSON.stringify({status: '102', msg: '文件写入失败'}));
+        } else {
+            client.uploadFile(filePath, {key: `/avatar/${fileName}`}, function (err1, result) {
+                if (err1) {
+                    res.json({
+                        status: '1',
+                        msg: '上传失败'
+                    });
+                } else {
+                    res.json({
+                        status: '0',
+                        result: {
+                            path: result.url
+                        },
+                        msg: 'suc'
+                    })
+                }
+                // 上传之后删除本地文件
+                fs.unlinkSync(filePath);
+            });
+        }
+    })
+})
+// 修改头像
+router.post('/updateheadimage', function (req, res, next) {
+    var userId = req.cookies.userId;
+    var imageSrc = req.body.imageSrc;
+    if (userId && imageSrc) {
+        User.update({"userId": userId},
+            {
+                "avatar": imageSrc
+            }, (err, doc) => {
+                if (err) {
+                    res.json({
+                        status: '1',
+                        msg: err.message,
+                        result: ''
+                    })
+                } else {
+                    res.json({
+                        status: '0',
+                        msg: '',
+                        result: '修改成功'
+                    });
+                }
+            })
+    } else {
+        res.json({
+            status: '1',
+            msg: '未登录或者缺少所需参数',
+            result: ''
+        })
+    }
+});
 // 获取用户信息
 router.post('/userInfo', function (req, res) {
     let userId = req.cookies.userId
@@ -496,7 +614,7 @@ router.post('/payMent', function (req, res) {
                                 });
                             }
                         });
-                    }, 1)
+                    }, 100)
                 }
             })
         } else {
