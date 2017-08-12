@@ -12,18 +12,33 @@ router.get('/computer', function (req, res, next) {
     let sort = req.param('sort') || '';
     let page = +req.param('page') || 1;
     let pageSize = +req.param('pageSize') || 20;
-    let priceGt = +req.param('priceGt') || '';
-    let priceLte = +req.param('priceLte') || '';
+    let priceGt = +req.param('priceGt') || ''; // 大于
+    let priceLte = +req.param('priceLte') || ''; // 小于
     let skip = (page - 1) * pageSize;//跳过多少条
     let params = {}
-    if (priceGt && priceLte) {
-        params = {
-            'salePrice': {
-                $gt: priceGt,
-                $lte: priceLte
+    if (priceGt || priceLte) {
+        if (priceGt && priceLte) {
+            if (priceGt > priceLte) {
+                var l = priceLte, g = priceGt
+                priceGt = l
+                priceLte = g
+            }
+            params = {
+                'salePrice': {
+                    $gt: priceGt,
+                    $lte: priceLte
+                }
+            }
+        } else {
+            params = {
+                'salePrice': {
+                    $gt: priceGt || 0,
+                    $lte: priceLte || 99999
+                }
             }
         }
     }
+
     // 返回一个模型
     let productModel = Good.find(params).skip(skip).limit(pageSize);
     // 进行排序 1 升序 -1 降序
@@ -359,66 +374,66 @@ router.get('/productHome', function (req, res) {
             })
         } else {
             let result = JSON.parse(res1.text)
-            let home_hot = result.data.home_hot || ['100031816','100032201','100025104','100023501'];
+            let home_hot = result.data.home_hot || ['100031816', '100032201', '100025104', '100023501'];
             let home_floors = result.data.home_floors
             let pId = [], // 保存总商品id
-                hotId=[], // 热门id
+                hotId = [], // 热门id
                 floorsId = [],// 官方精选 品牌精选
-                floorsList = []; 
-            home_hot.forEach(item=>{
-                hotId.push(item.spu_id+'01')
-                pId.push(item.spu_id+'01')
+                floorsList = [];
+            home_hot.forEach(item => {
+                hotId.push(item.spu_id + '01')
+                pId.push(item.spu_id + '01')
             })
-            home_floors.forEach((item,i)=>{
+            home_floors.forEach((item, i) => {
                 let tab_items = item.tabs[0].tab_items // 
                 floorsId[i] = []
                 floorsList[i] = {};
                 floorsList[i].tabs = [];
-                floorsList[i].image =  home_floors[i].tabs[0].tab_items[0]
+                floorsList[i].image = home_floors[i].tabs[0].tab_items[0]
                 floorsList[i].title = home_floors[i].title
-                tab_items.forEach(tab=>{
-                    let id = tab.spu_id 
-                    if(id){
-                     floorsId[i].push(id+'01') // 存储id
-                     pId.push(id+'01')
+                tab_items.forEach(tab => {
+                    let id = tab.spu_id
+                    if (id) {
+                        floorsId[i].push(id + '01') // 存储id
+                        pId.push(id + '01')
                     }
                 })
             })
-            Good.find({productId: {$in: pId}},(goodsErr,goodsDoc)=>{
-                if(goodsErr){
+            Good.find({productId: {$in: pId}}, (goodsErr, goodsDoc) => {
+                if (goodsErr) {
                     res.json({
-                    status: '1',
-                    msg: goodsErr.message,
-                    result: ''
-                })
-                }else{
-                 let hotList = [];
-                 goodsDoc.forEach(item=>{
-                     let itemId =  item.productId;
-                     hotId.forEach(id=>{
-                         if(itemId===id){
-                            hotList.push(item)
-                         }
-                     })
-                    floorsId.forEach((fitem,i)=>{
-                        fitem.forEach(fid=>{
-                        if(itemId===fid){
-                          floorsList[i].tabs.push(item)
-                         }
+                        status: '1',
+                        msg: goodsErr.message,
+                        result: ''
+                    })
+                } else {
+                    let hotList = [];
+                    goodsDoc.forEach(item => {
+                        let itemId = item.productId;
+                        hotId.forEach(id => {
+                            if (itemId === id) {
+                                hotList.push(item)
+                            }
+                        })
+                        floorsId.forEach((fitem, i) => {
+                            fitem.forEach(fid => {
+                                if (itemId === fid) {
+                                    floorsList[i].tabs.push(item)
+                                }
+                            })
                         })
                     })
-                 })
 
-                
-                res.json({
-                    status: '0',
-                    msg: 'suc',
-                    result: {
-                        "home_hot":hotList,
-                        'home_floors':floorsList
-                    }
-                })
-            }
+
+                    res.json({
+                        status: '0',
+                        msg: 'suc',
+                        result: {
+                            "home_hot": hotList,
+                            'home_floors': floorsList
+                        }
+                    })
+                }
             })
 
 
