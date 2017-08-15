@@ -5,8 +5,6 @@ var Good = require('../models/goods')
 var User = require('../models/user')
 var superagent = require('superagent')
 
-mongoose.connect('mongodb://127.0.0.1:27017/mymall')
-
 // 商品列表
 router.get('/computer', function (req, res, next) {
     let sort = req.param('sort') || '';
