@@ -5,7 +5,9 @@ var User = require('../models/user')
 var Good = require('../models/goods')
 var fs = require('fs');
 var qn = require('qn');
+// 空间名
 var bucket = 'avatar-img-d';
+// 七牛云
 var client = qn.create({
     accessKey: 'n83SaVzVtzNbZvGCz0gWsWPgpERKp0oK4BtvXS-Y',
     secretKey: '1Uve9T2_gQX9pDY0BFJCa1RM_isy9rNjfC4XVliW',
@@ -662,4 +664,47 @@ router.post('/orderList', function (req, res) {
         })
     }
 })
+// 删除订单
+router.post('/delOrder', function (req, res) {
+    let userId = req.cookies.userId,
+        orderId = req.body.orderId;
+    if (userId) {
+        if (orderId) {
+            User.update({userId}, {
+                $pull: {
+                    'orderList': {
+                        'orderId': orderId
+                    }
+                }
+            }, (err, doc) => {
+                if (err) {
+                    res.json({
+                        status: '1',
+                        msg: err.message,
+                        result: ''
+                    })
+                } else {
+                    res.json({
+                        status: '0',
+                        msg: '',
+                        result: 'suc'
+                    });
+                }
+            })
+        } else {
+            res.json({
+                status: '1',
+                msg: '缺少订单号',
+                result: ''
+            })
+        }
+    } else {
+        res.json({
+            status: '1',
+            msg: '未登录',
+            result: ''
+        })
+    }
+})
+
 module.exports = router

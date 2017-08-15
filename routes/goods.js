@@ -39,9 +39,8 @@ router.get('/computer', function (req, res, next) {
         }
     }
 
-    // 返回一个模型
     let productModel = Good.find(params).skip(skip).limit(pageSize);
-    // 进行排序 1 升序 -1 降序
+    // 1 升序 -1 降序
     sort && productModel.sort({'salePrice': sort})
     productModel.exec(function (err, doc) {
         if (err) {
@@ -149,7 +148,6 @@ router.post('/addCart', function (req, res, next) {
                         }
 
                     } else {
-                        console.log('内容为空')
                         // 没找到
                         Good.findOne({productId: productId}, function (err3, doc3) {
                             if (err3) {
@@ -363,9 +361,11 @@ router.post('/addCart1', function (req, res) {
 
 })
 
+let czUrl = 'http://www.smartisan.com/product/home'
+
 // 转发锤子接口
 router.get('/productHome', function (req, res) {
-    superagent.get('http://www.smartisan.com/product/home').end(function (err, res1) {
+    superagent.get(czUrl).end(function (err, res1) {
         if (err) {
             res.json({
                 status: '1',
