@@ -545,35 +545,6 @@ router.post('/payMent', function (req, res) {
                         goodsList = [];
                     let addressList = userDoc.addressList,
                         cartList = userDoc.cartList;
-                    if (productId && productNum) {
-                        Good.findOne({productId}, (goodsErr, goodsDoc) => {
-                            if (goodsErr) {
-                                res.json({
-                                    status: '1',
-                                    msg: goodsErr.message,
-                                    result: ''
-                                })
-                            } else {
-                                let item = {
-                                    productId: goodsDoc.productId,
-                                    productImg: goodsDoc.productImageBig,
-                                    productName: goodsDoc.productName,
-                                    checked: '1',
-                                    productNum,
-                                    productPrice: goodsDoc.salePrice
-                                }
-                                goodsList.push(item)
-
-                            }
-                        })
-                    } else {
-                        // 获取用户购物车的购买商品
-                        cartList.forEach((item) => {
-                            if (item.checked == '1') {
-                                goodsList.push(item);
-                            }
-                        });
-                    }
                     // 地址信息
                     addressList.forEach(item => {
                         if (item.addressId == addressId) {
@@ -595,7 +566,8 @@ router.post('/payMent', function (req, res) {
                         orderStatus: '1',
                         createDate: createDate
                     };
-                    setTimeout(() => {
+
+                    function cb() {
                         userDoc.cartList = [];
                         userDoc.orderList.push(order);
                         userDoc.save(function (err1, doc1) {
@@ -616,7 +588,38 @@ router.post('/payMent', function (req, res) {
                                 });
                             }
                         });
-                    }, 100)
+                    }
+
+                    if (productId && productNum) {
+                        Good.findOne({productId}, (goodsErr, goodsDoc) => {
+                            if (goodsErr) {
+                                res.json({
+                                    status: '1',
+                                    msg: goodsErr.message,
+                                    result: ''
+                                })
+                            } else {
+                                let item = {
+                                    productId: goodsDoc.productId,
+                                    productImg: goodsDoc.productImageBig,
+                                    productName: goodsDoc.productName,
+                                    checked: '1',
+                                    productNum,
+                                    productPrice: goodsDoc.salePrice
+                                }
+                                goodsList.push(item)
+                            }
+                            cb()
+                        })
+                    } else {
+                        // 获取用户购物车的购买商品
+                        cartList.forEach((item) => {
+                            if (item.checked == '1') {
+                                goodsList.push(item);
+                            }
+                        });
+                        cb()
+                    }
                 }
             })
         } else {

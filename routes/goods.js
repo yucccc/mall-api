@@ -7,11 +7,11 @@ var superagent = require('superagent')
 
 // 商品列表
 router.get('/computer', function (req, res, next) {
-    let sort = req.param('sort') || '';
-    let page = +req.param('page') || 1;
-    let pageSize = +req.param('pageSize') || 20;
-    let priceGt = +req.param('priceGt') || ''; // 大于
-    let priceLte = +req.param('priceLte') || ''; // 小于
+    let sort = req.query.sort || '';
+    let page = +req.query.page || 1;
+    let pageSize = +req.query.pageSize || 20;
+    let priceGt = +req.query.priceGt || ''; // 大于
+    let priceLte = +req.query.priceLte || ''; // 小于
     let skip = (page - 1) * pageSize;//跳过多少条
     let params = {}
     if (priceGt || priceLte) {
@@ -441,7 +441,7 @@ router.get('/productHome', function (req, res) {
 
 // 商品信息
 router.get('/productDet', function (req, res) {
-    let productId = req.param('productId')
+    let productId = req.query.productId
     Good.findOne({productId}, (err, doc) => {
         if (err) {
             res.json({
