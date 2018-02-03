@@ -111,7 +111,7 @@ router.post('/upload', function (req, res, next) {
     var fileName = Date.now() + '.png';
     // 构建图片路径
     var filePath = './image/' + fileName;
-    //过滤data:URL
+    // 过滤data:URL
     var base64Data = imgData.replace(/^data:image\/\w+;base64,/, "");
     var dataBuffer = new Buffer(base64Data, 'base64');
     fs.writeFile(filePath, dataBuffer, function (err) {

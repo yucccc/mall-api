@@ -1,9 +1,9 @@
-var express = require('express');
-var router = express.Router()
-var mongoose = require('mongoose')
-var Good = require('../models/goods')
-var User = require('../models/user')
-var superagent = require('superagent')
+const express     = require('express');
+const router      = express.Router()
+const mongoose    = require('mongoose')
+const Good        = require('../models/goods')
+const User        = require('../models/user')
+const superagent  = require('superagent')
 
 // 商品列表
 router.get('/computer', function (req, res, next) {
@@ -460,3 +460,6 @@ router.get('/productDet', function (req, res) {
 })
 
 module.exports = router
+
+
+
