@@ -2,12 +2,13 @@
 const getGoods = require('./getGoods')
 const getAdmin = require('./admin');
 
-;( async () => {
+;(async () => {
     await getGoods();
     await getAdmin();
-    process.exit(()=> {
-        console.log('抓取完毕');
-    })
+    process.on('exit', (code) => {
+        console.log(`数据抓取完毕`);
+    });
+    process.exit()
 })()
 
 
