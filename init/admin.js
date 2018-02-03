@@ -14,7 +14,6 @@ function initAdmin() {
             "cartList": [],
             "addressList": []
         }, () => {
-            console.log(2);
             resolve()
         })
     })

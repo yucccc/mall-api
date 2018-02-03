@@ -13,7 +13,7 @@ let baseUrl = 'https://www.smartisan.com';
 // 抓取锤子商品
 function getGoods() {
     return new Promise(resolve => {
-        let requestUrlLength = 3;
+        let requestUrlLength = 5;
         let requestUrl = []; // 请求的url
         for (let i = 1; i < requestUrlLength; i++) {
             requestUrl.push(`${baseUrl}/product/spus?page_size=20&category_id=62&page=${i}&sort=sort`)
@@ -24,9 +24,8 @@ function getGoods() {
             data.forEach( (item) => {
                 let item1 = JSON.parse(item)
                 const { list } = item1.data
-    
                 list.forEach(list1 => { // 每一项
-                    productUrl.push(`${baseUrl}/product/skus/${list1.id}01?with_spu_sku=true&with_stock=true`)
+                    productUrl.push(`${baseUrl}/product/skus/${list1.sku_info[0].sku_id}?with_spu_sku=true&with_stock=true`)
                 })
             });
             ep.after('productData', productUrl.length, (data) => {
@@ -47,7 +46,6 @@ function getGoods() {
                     return pro
                 })
                 Good.insertMany(data, () => {
-                    console.log(1);
                     resolve()
                 })
             })
