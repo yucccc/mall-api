@@ -1,5 +1,5 @@
-var mongoose = require('mongoose')
-var userSchema = new mongoose.Schema({
+const mongoose = require('mongoose')
+const userSchema = new mongoose.Schema({
     "userId": String,
     "name": String,
     "avatar": String,

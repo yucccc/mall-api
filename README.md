@@ -7,4 +7,7 @@
 > npm run initData
 
 👌启动项目 默认端口 3333
-> npm run start
+
+``npm run dev // 需要安装nodemon`` 
+or 
+``node run ./bin/www``

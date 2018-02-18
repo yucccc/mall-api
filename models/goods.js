@@ -1,6 +1,6 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
 // 表模型
-var produtSchema = new mongoose.Schema({
+const produtSchema = new mongoose.Schema({
     'productId': String,
     'salePrice': Number,
     'productName': String,

@@ -1,34 +1,31 @@
-var express = require('express')
-var router = express.Router()
+const express = require('express')
+const router = express.Router()
+const fs = require('fs');
+const qn = require('qn');
+
+const User = require('../models/user');
+const Good = require('../models/goods');
 require('./../util/dateFormat')
-var User = require('../models/user')
-var Good = require('../models/goods')
-var fs = require('fs');
-var qn = require('qn');
 // 空间名
-var bucket = 'avatar-img-d';
+const bucket = 'avatar-img-d';
 // 七牛云
-var client = qn.create({
+const client = qn.create({
     accessKey: 'n83SaVzVtzNbZvGCz0gWsWPgpERKp0oK4BtvXS-Y',
     secretKey: '1Uve9T2_gQX9pDY0BFJCa1RM_isy9rNjfC4XVliW',
     bucket: bucket,
     origin: 'http://ouibvkb9c.bkt.clouddn.com'
 })
+
 // 登陆接口
-router.post('/login', function (req, res) {
-    var params = {
-        userName: req.body.userName,
-        userPwd: req.body.userPwd
-    }
-    User.findOne(params, function (err, doc) {
-        if (err) {
-            res.json({
-                status: '1',
-                msg: err.message,
-                result: ''
-            })
-        } else if (doc) {
-            res.cookie("userId", doc.userId, {
+router.post('/login', async (req, res) => {
+
+    let {userName, userPwd} = req.body;
+    const doc = await User.findOne({userName, userPwd});
+
+    try {
+        if (doc) {
+            const {userId, name, avatar} = doc
+            res.cookie("userId", userId, {
                 path: '/',
                 maxAge: 1000 * 60 * 60
             });
@@ -36,8 +33,8 @@ router.post('/login', function (req, res) {
                 status: '0',
                 msg: '登陆成功',
                 result: {
-                    name: doc.name,
-                    avatar: doc.avatar
+                    name,
+                    avatar
                 }
             })
         } else {
@@ -47,10 +44,18 @@ router.post('/login', function (req, res) {
                 result: ''
             })
         }
-    })
+    } catch (err) {
+        res.json({
+            status: '1',
+            msg: err.message,
+            result: ''
+        })
+    }
+
 })
+
 // 登出登陆
-router.post('/loginOut', function (req, res) {
+router.post('/loginOut', (req, res) => {
     res.cookie("userId", "", {
         path: "/",
         maxAge: -1
@@ -61,48 +66,49 @@ router.post('/loginOut', function (req, res) {
         result: ''
     })
 })
+
 // 注册账号
-router.post('/register', function (req, res) {
-    let userName = req.body.userName, //账号　
-        userPwd = req.body.userPwd;　// 密码
-    User.findOne({userName}, (err, doc) => {
-        if (err) {
+router.post('/register', async (req, res) => {
+    const {userName, userPwd} = req.body;
+    try {
+        const doc = await User.findOne({userName})
+        if (doc) {
             res.json({
                 status: '1',
-                msg: err.message,
+                msg: '账号已存在!',
                 result: ''
             })
         } else {
-            if (doc) {
-                res.json({
-                    status: '1',
-                    msg: '账号已存在!',
-                    result: ''
-                })
-            } else {
-                let r1 = Math.floor(Math.random() * 10);
-                let r2 = Math.floor(Math.random() * 10);
-                let userId = `${r1}${(Date.parse(new Date())) / 1000}${r2}`
-                // 可以注册
-                User.insertMany({
-                    userName: userName,
-                    name: '皮皮虾',
-                    avatar: 'http://osc9sqdxe.bkt.clouddn.com/default-user-avatar.png',
-                    userId: userId,
-                    userPwd: userPwd,
-                    orderList: [],
-                    cartList: [],
-                    addressList: []
-                })
-                res.json({
-                    status: '0',
-                    msg: '注册成功',
-                    result: ''
-                })
-            }
+            let r1 = Math.floor(Math.random() * 10);
+            let r2 = Math.floor(Math.random() * 10);
+            let userId = `${r1}${(Date.parse(new Date())) / 1000}${r2}`
+            // 可以注册
+            User.insertMany({
+                avatar: 'http://osc9sqdxe.bkt.clouddn.com/default-user-avatar.png',
+                name: '皮皮虾',
+                cartList: [],
+                orderList: [],
+                addressList: [],
+                userName,
+                userId,
+                userPwd
+            })
+            res.json({
+                status: '0',
+                msg: '注册成功',
+                result: ''
+            })
         }
-    })
+
+    } catch (err) {
+        res.json({
+            status: '1',
+            msg: err.message,
+            result: ''
+        })
+    }
 })
+
 // 上传图片
 router.post('/upload', function (req, res, next) {
     // 图片数据流
@@ -139,6 +145,7 @@ router.post('/upload', function (req, res, next) {
         }
     })
 })
+
 // 修改头像
 router.post('/updateheadimage', function (req, res, next) {
     var userId = req.cookies.userId;
@@ -170,47 +177,51 @@ router.post('/updateheadimage', function (req, res, next) {
         })
     }
 });
+
 // 获取用户信息
-router.post('/userInfo', function (req, res) {
-    let userId = req.cookies.userId
+router.post('/userInfo', async (req, res) => {
+    const {userId} = req.cookies
     if (userId) {
-        User.findOne({
-            userId
-        }, function (err, doc) {
-            res.json({
-                status: '0',
-                msg: 'suc',
-                result: {
-                    name: doc.name,
-                    avatar: doc.avatar
-                }
-            })
+        let {name, avatar} = await  User.findOne({userId})
+        res.json({
+            status: 0,
+            msg: 'suc',
+            result: {
+                name,
+                avatar
+            }
         })
     } else {
         res.json({
-            status: '1',
+            status: 1,
             msg: '未登录',
             result: ''
         })
     }
 })
+
 // 获取购物车
-router.post('/cartList', function (req, res) {
-    let userId = req.cookies.userId;
+router.post('/cartList', async (req, res) => {
+    const {userId} = req.cookies;
     if (userId) {
         // 去查用户名下的
-        User.findOne({
-            userId: userId
-        }, function (err, userDoc) {
-            if (userDoc) {
-                res.json({
-                    status: '1',
-                    msg: "suc",
-                    count: userDoc.cartList.length,
-                    result: userDoc.cartList
-                })
-            }
-        })
+        const userDoc = await User.findOne({userId});
+        if (userDoc) {
+            const {cartList} = userDoc
+            res.json({
+                status: '1',
+                msg: "suc",
+                count: cartList.length,
+                result: cartList
+            })
+        } else {
+            res.json({
+                status: 0,
+                msg: "用户不存在",
+                result: ''
+            })
+        }
+
     } else {
         res.json({
             status: '0',
@@ -522,149 +533,146 @@ router.post('/addressDel', function (req, res) {
     }
 
 })
+
 // 生成订单
-router.post('/payMent', function (req, res) {
-    let userId = req.cookies.userId,
-        addressId = req.body.addressId,
-        orderTotal = req.body.orderTotal,// 商品总价格
-        productId = req.body.productId || '',
-        productNum = req.body.productNum || 0;
-    if (userId) {
-        if (addressId && orderTotal) {
-            User.findOne({
-                userId
-            }, (err, userDoc) => {
-                if (err) {
-                    res.json({
-                        status: '1',
-                        msg: err.message,
-                        result: ''
-                    })
+router.post('/payMent', async (req, res) => {
+    try {
+        let {addressId, orderTotal, productId, productNum} = req.body
+        const {userId} = req.cookies
+        // 是否登录
+        if (userId) {
+            // 需要地址id 以及 订单价格
+            if (addressId && orderTotal) {
+                let userDoc = await User.findOne({userId});
+                let userAddress = {},
+                    goodsList = [];
+                const {addressList, cartList} = userDoc
+                // 地址信息
+                addressList.forEach(item => {
+                    if (item.addressId == addressId) {
+                        userAddress = item
+                    }
+                })
+
+                // 生成订单号
+                let platform = '618';
+                let r1 = Math.floor(Math.random() * 10);
+                let r2 = Math.floor(Math.random() * 10);
+                let sysDate = new Date().Format('yyyyMMddhhmmss');
+                let createDate = new Date().Format('yyyy-MM-dd hh:mm:ss');
+                let orderId = platform + r1 + sysDate + r2;
+                let order = {
+                    orderId: orderId,
+                    orderTotal: orderTotal,
+                    addressInfo: userAddress,
+                    goodsList: goodsList,
+                    orderStatus: '1',
+                    createDate: createDate
+                };
+
+                if (productId && productNum) {
+                    let goodsDoc = await Good.findOne({productId})
+
+                    let item = {
+                        productId: goodsDoc.productId,
+                        productImg: goodsDoc.productImageBig,
+                        productName: goodsDoc.productName,
+                        checked: '1',
+                        productNum,
+                        productPrice: goodsDoc.salePrice
+                    }
+
+                    goodsList.push(item)
+                    cb()
+
                 } else {
-                    let userAddress = {},
-                        goodsList = [];
-                    let addressList = userDoc.addressList,
-                        cartList = userDoc.cartList;
-                    // 地址信息
-                    addressList.forEach(item => {
-                        if (item.addressId == addressId) {
-                            userAddress = item
+                    // 获取用户购物车的购买商品
+                    cartList.forEach((item) => {
+                        if (item.checked == '1') {
+                            goodsList.push(item);
                         }
-                    })
-                    // 生成订单号
-                    let platform = '618';
-                    let r1 = Math.floor(Math.random() * 10);
-                    let r2 = Math.floor(Math.random() * 10);
-                    let sysDate = new Date().Format('yyyyMMddhhmmss');
-                    let createDate = new Date().Format('yyyy-MM-dd hh:mm:ss');
-                    let orderId = platform + r1 + sysDate + r2;
-                    let order = {
-                        orderId: orderId,
-                        orderTotal: orderTotal,
-                        addressInfo: userAddress,
-                        goodsList: goodsList,
-                        orderStatus: '1',
-                        createDate: createDate
-                    };
-
-                    function cb() {
-                        userDoc.cartList = [];
-                        userDoc.orderList.push(order);
-                        userDoc.save(function (err1, doc1) {
-                            if (err1) {
-                                res.json({
-                                    status: "1",
-                                    msg: err.message,
-                                    result: ''
-                                });
-                            } else { // 保存
-                                res.json({
-                                    status: "0",
-                                    msg: '',
-                                    result: {
-                                        orderId: order.orderId,
-                                        orderTotal: order.orderTotal
-                                    }
-                                });
-                            }
-                        });
-                    }
-
-                    if (productId && productNum) {
-                        Good.findOne({productId}, (goodsErr, goodsDoc) => {
-                            if (goodsErr) {
-                                res.json({
-                                    status: '1',
-                                    msg: goodsErr.message,
-                                    result: ''
-                                })
-                            } else {
-                                let item = {
-                                    productId: goodsDoc.productId,
-                                    productImg: goodsDoc.productImageBig,
-                                    productName: goodsDoc.productName,
-                                    checked: '1',
-                                    productNum,
-                                    productPrice: goodsDoc.salePrice
-                                }
-                                goodsList.push(item)
-                            }
-                            cb()
-                        })
-                    } else {
-                        // 获取用户购物车的购买商品
-                        cartList.forEach((item) => {
-                            if (item.checked == '1') {
-                                goodsList.push(item);
-                            }
-                        });
-                        cb()
-                    }
+                    });
+                    cb()
                 }
-            })
+
+                function cb() {
+                    userDoc.cartList = [];
+                    userDoc.orderList.push(order);
+                    userDoc.save(function (err1, doc1) {
+                        if (err1) {
+                            res.json({
+                                status: 1,
+                                msg: err.message,
+                                result: ''
+                            });
+                        } else { // 保存
+                            res.json({
+                                status: 0,
+                                msg: '',
+                                result: {
+                                    orderId: order.orderId,
+                                    orderTotal: order.orderTotal
+                                }
+                            });
+                        }
+                    });
+                }
+
+            } else {
+                res.json({
+                    status: 0,
+                    msg: '缺少必须参数',
+                    result: ''
+                })
+            }
         } else {
             res.json({
-                status: '1',
-                msg: '缺少必须参数',
+                status: 1,
+                msg: '未登录',
                 result: ''
             })
         }
-    } else {
+    } catch (err) {
         res.json({
-            status: '1',
-            msg: '未登录',
+            status: 1,
+            msg: err.message,
             result: ''
         })
     }
 
+
 })
 // 查询订单
-router.post('/orderList', function (req, res) {
-    let userId = req.cookies.userId,
-        orderId = req.body.orderId;
+router.post('/orderList', async (req, res) => {
+    const {userId} = req.cookies
     if (userId) {
-        User.findOne({
-            userId
-        }, (err, doc) => {
-            if (err) {
-                res.json({
-                    status: '1',
-                    msg: err.message,
-                    result: ''
-                })
-            } else {
+        try {
+            const doc = await User.findOne({userId})
+            if (doc) {
                 let orderList = doc.orderList,
                     msg = 'suc';
-                if (!orderList.length) {
+                if (orderList.length <= 0) {
                     msg = '该用户暂无订单'
                 }
                 res.json({
-                    status: '0',
+                    status: 0,
                     msg: msg,
                     result: orderList
                 })
+            } else {
+                res.json({
+                    status: 0,
+                    msg: "用户不存在",
+                    result: ''
+                })
             }
-        })
+        } catch (err) {
+            res.json({
+                status: 1,
+                msg: err.message,
+                result: ''
+            })
+        }
     }
 })
 // 删除订单
@@ -682,13 +690,13 @@ router.post('/delOrder', function (req, res) {
             }, (err, doc) => {
                 if (err) {
                     res.json({
-                        status: '1',
+                        status: 1,
                         msg: err.message,
                         result: ''
                     })
                 } else {
                     res.json({
-                        status: '0',
+                        status: 0,
                         msg: '',
                         result: 'suc'
                     });
@@ -696,14 +704,14 @@ router.post('/delOrder', function (req, res) {
             })
         } else {
             res.json({
-                status: '1',
+                status: 1,
                 msg: '缺少订单号',
                 result: ''
             })
         }
     } else {
         res.json({
-            status: '1',
+            status: 1,
             msg: '未登录',
             result: ''
         })
