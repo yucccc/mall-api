@@ -8,6 +8,8 @@
 
 👌启动项目 默认端口 3333
 
-``npm run dev // 需要安装nodemon`` 
-or 
+``npm run dev``
+
+or
+
 ``node run ./bin/www``

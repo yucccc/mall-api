@@ -110,7 +110,7 @@ router.post('/register', async (req, res) => {
 })
 
 // 上传图片
-router.post('/upload', function (req, res, next) {
+router.post('/upload',  (req, res, next) => {
     // 图片数据流
     var imgData = req.body.imgData;
     // 构建图片名
@@ -120,17 +120,13 @@ router.post('/upload', function (req, res, next) {
     // 过滤data:URL
     var base64Data = imgData.replace(/^data:image\/\w+;base64,/, "");
     var dataBuffer = new Buffer(base64Data, 'base64');
-    fs.writeFile(filePath, dataBuffer, function (err) {
-        if (err) {
-            res.end(JSON.stringify({status: '102', msg: '文件写入失败'}));
-        } else {
-            client.uploadFile(filePath, {key: `/avatar/${fileName}`}, function (err1, result) {
-                if (err1) {
-                    res.json({
-                        status: '1',
-                        msg: '上传失败'
-                    });
-                } else {
+    try {
+        fs.writeFile(filePath, dataBuffer, function (err) {
+            if (err) {
+                res.end(JSON.stringify({status: '102', msg: '文件写入失败'}));
+            } else {
+                client.uploadFile(filePath, {key: `/avatar/${fileName}`}, function (err1, result) {
+
                     res.json({
                         status: '0',
                         result: {
@@ -138,12 +134,19 @@ router.post('/upload', function (req, res, next) {
                         },
                         msg: 'suc'
                     })
-                }
-                // 上传之后删除本地文件
-                fs.unlinkSync(filePath);
-            });
-        }
-    })
+                    
+                    // 上传之后删除本地文件
+                    fs.unlinkSync(filePath);
+                });
+            }
+        })
+    } catch (err) {
+        res.json({
+            status: '1',
+            msg: err.message
+        });
+    }
+
 })
 
 // 修改头像

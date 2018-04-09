@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "nodemon ./bin/www",
-    "initData": "node ./init/init-data.js"
+    "initData": "node ./init/init-data.js",
+    "prod": "pm2 start ./bin/www --watch -n czmall"
   },
   "dependencies": {
     "async": "^2.5.0",
