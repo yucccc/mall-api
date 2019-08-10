@@ -1,7 +1,7 @@
 ## 锤子商城接口
 
 ☝️先启动mongodb
-> mongodb
+> mongod
 
 ✌️首次运行需要先初始化数据库抓取锤子商城数据
 > npm run initData
