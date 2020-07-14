@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon ./bin/www",
+    "dev": "node ./bin/www",
     "initData": "node ./init/init-data.js",
     "prod": "pm2 start ./bin/www --watch -n czmall"
   },
